@@ -1,0 +1,13 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 24-03-2026 15:22:56
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+-- data definitions used by platform:/resource/YOLOv11_Testing/new_file.rct
+
+pre_yolov11_linear(param_x) = true
+	

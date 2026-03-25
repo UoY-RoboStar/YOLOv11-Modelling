@@ -1,0 +1,19 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 24-03-2026 15:22:57
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+include "yolov11.csp"
+
+
+
+-- timed deadlock free
+assert prioritise(P_yolov11_ConvTest[[tock<-tock,tock<-tock']],<diff(Events,{tock',tock}),{tock}>)\{tock} :[divergence free [FD]]
+
+-- timelock free
+assert RUN({tock}) ||| CHAOS(diff(Events,{|tock|})) [F= P_yolov11_ConvTest
+

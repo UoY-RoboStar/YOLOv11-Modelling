@@ -1,0 +1,89 @@
+package yolov11
+
+anncontroller YOLOv11S {
+		//ANN Controller context
+		event image : Tensor3D(640, 640, 3)
+		event output : Tensor3D(160, 160, 32)
+		
+		//Connections
+		connection ConvTest on image to RCB1 on input
+		connection RCB1 on output to ConvTest on output
+		
+		//ANN Blocks (RCB1, represents blocks B1-B2 of YOLOv11)
+		convblock RCB1 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+     		 weights = <>
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			//I/O Contexts
+			inputContext {
+				event input : Tensor3D(640, 640, 3)
+			}
+			
+			outputContext {
+				event output : Tensor3D(160, 160, 64)
+			}
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+		}
+		
+		
+		//Comp Block test:
+		
+		
+		compblock asdf {
+		  connection asdf on input to test6 on input
+		  
+			inputContext {
+				event input : vector(5, real)
+			}
+			outputContext {
+				event output : vector(6,real)
+			}
+			convblock test {
+				inputContext {
+					event input : vector(5, real)
+				}
+				outputContext {
+					event output : vector(6,real)
+				}
+			}
+			convblock test2 {
+				
+			}
+		}
+		
+}
+
+function linear(x:real):real {}
+
+

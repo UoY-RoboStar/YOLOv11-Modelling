@@ -1,0 +1,105 @@
+
+--
+-- RoboChart generator version 3.0.0.qualifier
+-- Automatically generated on 24-03-2026 15:22:56
+--
+-- Iterated compression status: true
+-- Assertions compression status: false
+--
+
+module yolov11
+exports
+
+
+
+module ConvTest
+shared_variable_events = {||}
+exports
+	-- declaring controller events
+	channel image: InOut.vector_vector_vector_real_3_640_640
+	channel output: InOut.Object
+	channel image: InOut.vector_vector_vector_real_3_640_640
+	channel output: InOut.Object
+	
+	-- declaring controller termination channel
+	channel terminate
+	
+	-- channel set with all visible events
+	sem__events = {|
+		terminate
+	,	image,
+		output,
+		image,
+		output
+	|}
+	D__(id__) = let 
+		Input_Channels = { 
+					image,
+					output
+				} 
+		Output_Channels = { 
+					image,
+					output
+				} 
+		Choose(CS) = ||| c: CS @ c?x -> SKIP
+		C = SKIP
+	
+	within
+		C
+	
+	-- VS version
+	VS__(id__) = let 
+		Input_Channels = { 
+					image,
+					output
+				} 
+		Output_Channels = { 
+					image,
+					output
+				} 
+		Choose(CS) = ||| c: CS @ c?x -> SKIP
+		C = SKIP
+	
+	within
+		C
+	
+	-- O version (optimised) THESE TWO PROCESSES SHOULD BE KEPT IN SYNC WITH THE ABOVE TWO
+	O__(id__) = let 
+		Input_Channels = { 
+					image,
+					output
+				} 
+		Output_Channels = { 
+					image,
+					output
+				} 
+		Choose(CS) = ||| c: CS @ c?x -> SKIP
+		C = SKIP
+	
+	within
+		C
+							
+	-- VS_O version
+	VS_O__(id__) = let 
+		Input_Channels = { 
+					image,
+					output
+				} 
+		Output_Channels = { 
+					image,
+					output
+				} 
+		Choose(CS) = ||| c: CS @ c?x -> SKIP
+		C = SKIP
+	
+	within
+		C
+		
+	HEXT(id__) = O__(id__) [|shared_variable_events|] SKIP			
+	
+endmodule
+
+
+
+
+endmodule
