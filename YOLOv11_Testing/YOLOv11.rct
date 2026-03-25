@@ -1,13 +1,16 @@
 package yolov11
 
+type BoundingBoxType
+type ConfidenceType
+
 anncontroller YOLOv11S {
 		//ANN Controller context
 		event image : Tensor3D(640, 640, 3)
-		event output : Tensor3D(160, 160, 32)
+		event boundingBoxes : BoundingBoxType
+		event confidence : ConfidenceType
 		
 		//Connections
 		connection ConvTest on image to RCB1 on input
-		connection RCB1 on output to ConvTest on output
 		
 		//ANN Blocks (RCB1, represents blocks B1-B2 of YOLOv11)
 		convblock RCB1 {
