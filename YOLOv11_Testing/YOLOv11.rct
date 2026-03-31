@@ -3,6 +3,10 @@ package yolov11
 type BoundingBoxType
 type ConfidenceType
 
+
+function linear(x:real):real {}
+
+
 anncontroller YOLOv11S {
 		//ANN Controller context
 		event image : Tensor3D(640, 640, 3)
@@ -10,7 +14,7 @@ anncontroller YOLOv11S {
 		event confidence : ConfidenceType
 		
 		//Connections
-		connection ConvTest on image to RCB1 on input
+		connection YOLOv11S on image to RCB1 on input
 		
 		//ANN Blocks (RCB1, represents blocks B1-B2 of YOLOv11)
 		convblock RCB1 {
@@ -21,7 +25,6 @@ anncontroller YOLOv11S {
 			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
 			 * Biases shape: Sequence of size 2. 
 			 */
-     		 weights = <>
 			file = "RCB1-Weights.csv"
 			
 			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
@@ -60,33 +63,82 @@ anncontroller YOLOv11S {
 		}
 		
 		
-		//Comp Block test:
+		//RCB21
 		
-		
-		compblock asdf {
-		  connection asdf on input to test6 on input
+		compblock RCB2 {
 		  
 			inputContext {
-				event input : vector(5, real)
+				event input : Tensor3D(160, 160, 64)
 			}
 			outputContext {
-				event output : vector(6,real)
+				event output : Tensor3D(160, 160, 128)
 			}
-			convblock test {
+			connection RCB2 on input to RCB21 on input
+			connection RCB21 on output to RCB2S1 on input
+			connection RCB2S1 on output1 to RCB22 on input
+			
+			convblock RCB21 {
 				inputContext {
-					event input : vector(5, real)
+					event input : Tensor3D(160, 160, 64)
 				}
 				outputContext {
-					event output : vector(6,real)
+					event output : Tensor3D(160, 160, 64)
+				}
+				paddings = [|0|]
+				strides = [|0|]
+				kernelSizes = [|0|]
+				activation = linear
+				weights = <> 
+				layerstructure = [|0|]
+				
+				batch normalisation {
+					weights = <>
+					file = "RCB21-BN-Weights.csv"
+				
+					//Statistical Parameters (obtained from running averages during training time) 
+					means = <>
+					variances = <>
 				}
 			}
-			convblock test2 {
-				
+			
+			splitBlock RCB2S1 {
+				inputContext {
+					event input : Tensor3D(160, 160, 64)
+				}
+				outputContext {
+					ordevent output1 : Tensor3D(160, 160, 32) 1
+					ordevent output2 : Tensor3D(160, 160, 32) 2
+				}
+				2
 			}
+			
+			convblock RCB22 {
+				inputContext {
+					event input : Tensor3D(160, 160, 32)
+				}
+				outputContext {
+					event output : Tensor3D(160, 160, 32)
+				}
+				paddings = [|0|]
+				strides = [|0|]
+				kernelSizes = [|0|]
+				activation = linear
+				weights = <> 
+				layerstructure = [|0|]
+				
+				batch normalisation {
+					weights = <>
+					file = "RCB21-BN-Weights.csv"
+				
+					//Statistical Parameters (obtained from running averages during training time) 
+					means = <>
+					variances = <>
+				}
+			}
+			
+			
+			
 		}
-		
-}
-
-function linear(x:real):real {}
+	}
 
 
