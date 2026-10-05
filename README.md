@@ -6,8 +6,8 @@ The YOLOv11 network is modelled as a single ANN Controller in the new RoboChart 
 
 Parameters for the network structure (from S version):
 
-D - depth multiple = 0.50
-W - width multiple = 0.50
-MC - Max Channels = 1024
+D - depth multiple = 0.50 <br>
+W - width multiple = 0.50 <br>
+MC - Max Channels = 1024 
 
 
