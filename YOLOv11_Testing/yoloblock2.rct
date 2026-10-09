@@ -1,571 +1,39 @@
 package yolov11
 
-type BoundingBoxType
-type ConfidenceType
 
-
-anncontroller NTNU {
-	event input : vector(real, 7)
-	event output : vector(real, 3)
-	
-	connection NTNU on input to fclayers on inputANN
-	connection fclayers on outputANN to NTNU on output
-	
-	fcblock fclayers {
-		
-		activation = ReLU
-		outputfunction = Sigmoid
-		
-		layerstructure = [|4, 2|]
-		
-		weights = <[| [|0.01, 0.02, 0.03, 0.04|], [|0.05, 0.06, 0.07, 0.08|], [|0.09, 0.10, 0.11, 0.12|] |],
-				  [| [| 0.11, 0.12 |], [| 0.13, 0.14 |], [| 0.15, 0.16 |], [| 0.17, 0.18 |] |] >
-        
-        biases = <[|0.001, 0.002, 0.003, 0.004|], [| 0.01, 0.02 |]>
-        
-        
-        outputContext {
-			event outputANN : vector(real, 3)
-		}		
-	inputContext {
-				event inputANN : vector(real, 7)
-			}
-
-	}
-}
-
-//The base architecture for YOLOv11S, applicable to DTI and PAL. 
-
-anncontroller YOLOv11S {
+anncontroller YOLO_ANNBlock2 {
 		//ANN Controller context
-		event image : Tensor3D(640, 640, 3)
-		event boundingBoxes : Tensor3D(1,5,8400)
+		event input1 : Tensor3D(80, 80, 256)
+		event input2 : Tensor3D(40, 40, 256)
+		event input3 : Tensor3D(20, 20, 512)
 		
-		//Connections
-		connection YOLOv11S on image to ANNBlock1 on input
-		//connection RCB1 on output to YOLOv11S on boundingBoxes
-		connection ANNBlock1 on out1 to ANNBlock2 on in1
-		connection ANNBlock1 on out2 to ANNBlock2 on in2
-		connection ANNBlock1 on out3 to ANNBlock2 on in3
-		connection ANNBlock2 on out1 to ANNBlock3 on in1
-		connection ANNBlock2 on out2 to ANNBlock3 on in2
-		connection ANNBlock2 on out3 to ANNBlock3 on in3
-		connection ANNBlock3 on out to YOLOv11S on boundingBoxes
-		//ANN Blocks (RCB1, represents blocks B1-B2 of YOLOv11)
-		
-		
-		convblock ANNBlock1 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(80,80, 256)
-				event out2 : Tensor3D(40,40, 256)
-				event out3 : Tensor3D(20, 20, 512)
-			}
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-		inputContext {
-				event input : Tensor3D(640, 640, 3)
-			}
-
-	}
-		
-		
-		convblock ANNBlock2 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-						//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(80,80, 128)
-				event out2 : Tensor3D(40,40, 256)
-				event out3 : Tensor3D(20, 20, 512)
-			}
-			inputContext {
-				event in1 : Tensor3D(80,80,256)
-					event in2 : Tensor3D(40,40,256)
-					event in3: Tensor3D(20, 20, 512)
-					
-			}
-
-	}
-			
-
-		convblock ANNBlock3 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			//I/O Contexts
-			outputContext {
-				event out : Tensor3D(1, 5, 8400)
-			}
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-		inputContext {
-				event in1 : Tensor3D(80,80, 128)
-				event in2 : Tensor3D(40,40, 256)
-				event in3 : Tensor3D(20, 20, 512)
-					
-			}
-
-	}
-			
-			
-}
-
-
-
-anncontroller YOLO_ANNBlock1 {
-		//ANN Controller context
-		event input : Tensor3D(640, 640, 3)
-		event output1 : Tensor3D(80,80,256)
+		event output1 : Tensor3D(80,80,128)
 		event output2 : Tensor3D(40,40,256)
 		event output3 : Tensor3D(20,20,512)
 		
 		//Connections
-		connection YOLO_ANNBlock1 on input to Conv1 on in1
-		connection Conv1 on out1 to ANNBlock1 on in1
-		connection ANNBlock1 on out1 to Conv2 on in1
-		connection Conv2 on out1 to ANNBlock2 on in1
-		connection ANNBlock2 on out1 to YOLO_ANNBlock1 on output1
-		connection ANNBlock2 on out2 to Conv3 on in1
-		connection Conv3 on out1 to ANNBlock3 on in1
-		connection ANNBlock3 on out1 to YOLO_ANNBlock1 on output2
+		connection YOLO_ANNBlock2 on input1 to Concat3 on in1
+		connection YOLO_ANNBlock2 on input3 to ANNBlock1 on in1
+		connection ANNBlock1 on out1 to ANNBlock2 on in1
+		connection ANNBlock2 on out1 to Upsample1 on in1
+		connection YOLO_ANNBlock2 on input2 to Concat2 on in1
+		connection Upsample1 on out1 to Concat2 on in2
+		connection Concat2 on out1 to ANNBlock3 on in1
+		connection ANNBlock3 on out1 to Upsample2 on in1
+		connection Upsample2 on out1 to Concat3 on in2
+		connection Concat3 on out1 to ANNBlock4 on in1
+		connection ANNBlock4 on out1 to YOLO_ANNBlock2 on output1
+		connection ANNBlock4 on out2 to Conv1 on in1
+		connection Conv1 on out1 to Concat4 on in2
 		
-		connection ANNBlock3 on out2 to Conv4 on in1
 		
-		connection Conv4 on out1 to ANNBlock4 on in1
-		connection ANNBlock4 on out1 to YOLO_ANNBlock1 on output3
+		
+		
+		
+		
 		//ANN Blocks (RCB1, represents blocks B1-B2 of YOLOv11)
 		
-		
-		convblock Conv1 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(160, 160, 64)
-			}
-		inputContext {
-				event in1 : Tensor3D(640, 640, 3)
-			}
-
-	}
-		
-		
 		convblock ANNBlock1 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-						//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(160, 160, 128)
-			}
-			inputContext {
-				event in1 : Tensor3D(160, 160, 64)
-					
-			}
-
-	}
-			
-			convblock Conv2 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(80, 80, 128)
-			}
-		inputContext {
-				event in1 : Tensor3D(160, 160, 128)
-			}
-
-	}
-	
-	convblock ANNBlock2 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(80, 80, 256)
-				event out2 : Tensor3D(80, 80, 256)
-			}
-		inputContext {
-				event in1 : Tensor3D(80, 80, 128)
-			}
-
-	}
-	
-	convblock Conv3 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(40, 40, 256)
-			}
-		inputContext {
-				event in1 : Tensor3D(80, 80, 256)
-			}
-
-	}
-	
-	convblock ANNBlock3 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(40, 40, 256)
-				event out2 : Tensor3D(40, 40, 256)
-			}
-		inputContext {
-				event in1 : Tensor3D(40, 40, 256)
-			}
-
-	}
-	
-	convblock Conv4 {
-
-			activation = linear
-			outputfunction = linear
-			/*
-			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
-			 * Biases shape: Sequence of size 2. 
-			 */
-			file = "RCB1-Weights.csv"
-			
-			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
-			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
-			
-			//Desired shapes are sequences of natural numbers
-			strides = [| 2,2|] 
-			paddings = [| 0,0 |]
-			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
-			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
-			
-			
-			
-			
-			//Optional Normalisation Block
-			batch normalisation {
-				/*
-				 * Shape of each parameter (weights, biases, means, variances) is  
-				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
-				 */
-				//Trained Parameters (both are optional)
-				weights = <>
-				file = "RCB1-BN-Weights.csv"
-				
-				//Statistical Parameters (obtained from running averages during training time) 
-				means = <>
-				variances = <>
-			}
-			
-			//I/O Contexts
-			outputContext {
-				event out1 : Tensor3D(20,20,512)
-			}
-		inputContext {
-				event in1 : Tensor3D(40,40,256)
-			}
-
-	}
-	
-		convblock ANNBlock4 {
 
 			activation = linear
 			outputfunction = linear
@@ -611,8 +79,445 @@ anncontroller YOLO_ANNBlock1 {
 			}
 
 	}
+	
+	convblock ANNBlock2 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(20,20,512)
+				event out2 : Tensor3D(20, 20, 512)
+			}
+		inputContext {
+				event in1 : Tensor3D(20,20,512)
+			}
+
+	}
+	
+	convblock Upsample1 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(40,40,512)
+			}
+		inputContext {
+				event in1 : Tensor3D(20,20,512)
+			}
+
+	}
+	
+	convblock Concat2 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(40,40,768)
+			}
+		inputContext {
+				event in1 : Tensor3D(40,40,256)
+				event in2 : Tensor3D(40,40,512)
+			}
+
+	}
+	
+	
+	convblock ANNBlock3 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(40,40,256)
+				event out2 : Tensor3D(40,40,256)
+			}
+		inputContext {
+				event in1 : Tensor3D(40,40,768)
+			}
+
+	}
+	
+	convblock Upsample2 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(80,80,256)
+			}
+		inputContext {
+				event in1 : Tensor3D(40,40,256)
+			}
+
+	}
+	
+	convblock Concat3 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(80, 80, 512)
+			}
+		inputContext {
+				event in1 : Tensor3D(80, 80, 256)
+				event in2 : Tensor3D(80, 80, 256)
+			}
+
+	}
+	
+	convblock ANNBlock4 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(80, 80, 128)
+				event out2 : Tensor3D(80, 80, 128)
+			}
+		inputContext {
+				event in1 : Tensor3D(80, 80, 512)
+			}
+
+	}
+	
+	convblock Conv1 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(40,40,128)
+			}
+		inputContext {
+				event in1 : Tensor3D(80, 80, 128)
+			}
+
+	}
+	
+	convblock Concat4 {
+
+			activation = linear
+			outputfunction = linear
+			/*
+			 * Weights shape: <(320 x 320 x 32 x 3 x 3 x 3), (160 x 160 x 64 x 32 x 3 x 3)>
+			 * Biases shape: Sequence of size 2. 
+			 */
+			file = "RCB1-Weights.csv"
+			
+			//Layer structure is expected (for a convolutional layer) to be a sequence of tuples capturing the layer structure. 
+			layerstructure = [| [| 320, 320, 32|], [| 160, 160, 64|] |]
+			
+			//Desired shapes are sequences of natural numbers
+			strides = [| 2,2|] 
+			paddings = [| 0,0 |]
+			//Desired type is a sequence of pairs, we are only considering 2D convolutions. 
+			kernelSizes = [| [|3,3|], [| 3,3 |] |] 
+			
+			
+			
+			
+			//Optional Normalisation Block
+			batch normalisation {
+				/*
+				 * Shape of each parameter (weights, biases, means, variances) is  
+				 * Shape: <(320 x 320 x 64), (320 x 320 x 32)>
+				 */
+				//Trained Parameters (both are optional)
+				weights = <>
+				file = "RCB1-BN-Weights.csv"
+				
+				//Statistical Parameters (obtained from running averages during training time) 
+				means = <>
+				variances = <>
+			}
+			
+			//I/O Contexts
+			outputContext {
+				event out1 : Tensor3D(40,40,384)
+			}
+		inputContext {
+				event in1 : Tensor3D(40,40,256)
+				event in2 : Tensor3D(40,40,128)
+			}
+
+	}
 		
 			
 			
 }
 
+
+
+
+
+function linear(x:real):real {}
+function ReLU(x:real):real {}
+function Sigmoid(x:real):real {}
